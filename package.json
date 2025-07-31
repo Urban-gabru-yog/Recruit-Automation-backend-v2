@@ -1,0 +1,20 @@
+{
+  "dependencies": {
+    "@azure/identity": "^4.10.2",
+    "@azure/msal-node": "^3.6.4",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "axios": "^1.10.0",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "google-auth-library": "^10.1.0",
+    "googleapis": "^153.0.0",
+    "isomorphic-fetch": "^3.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "mysql2": "^3.14.2",
+    "sequelize": "^6.37.7",
+    "start": "node -r dotenv/config server.js"
+  }
+}
