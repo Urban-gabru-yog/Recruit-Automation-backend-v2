@@ -12,7 +12,7 @@ router.post("/create", async (req, res) => {
 
   const job = await Job.create({ team, position, jd, custom_questions, team_lead_email });
 
-  job.form_link = `http://localhost:5173/form/${job.id}`;
+  job.form_link = `https://recruit-automation-frontend-v2.vercel.app/form/${job.id}`;
   job.sheet_link = `https://globalbees1-my.sharepoint.com/:f:/g/personal/ankit_patil_urbangabru_in/Eqo3LNyHplxAlqMalY4SBwIBpul1h4AGM0Knw5p_fmbj3A?e=cza1sw/${job.id}.xlsx`;
 
   await job.save();
