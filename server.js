@@ -25,3 +25,6 @@ sequelize.sync().then(() => {
 app.get('/', (req, res) => {
   res.send('Recruitment backend is running ✅');
 });
+
+
+require("./scripts/cronjob"); // Start the resume scoring cron

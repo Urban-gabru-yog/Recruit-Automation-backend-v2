@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { Job, Candidate } = require("../models");
+const frontendUrl = process.env.FRONTEND_URL;
 
 router.get("/", async (req, res) => {
   const jobs = await Job.findAll();
@@ -12,7 +13,7 @@ router.post("/create", async (req, res) => {
 
   const job = await Job.create({ team, position, jd, custom_questions, team_lead_email });
 
-  job.form_link = `https://recruit-automation-frontend-v2.vercel.app/form/${job.id}`;
+  job.form_link = `${frontendUrl}/form/${job.id}`;
   job.sheet_link = `https://globalbees1-my.sharepoint.com/:f:/g/personal/ankit_patil_urbangabru_in/Eqo3LNyHplxAlqMalY4SBwIBpul1h4AGM0Knw5p_fmbj3A?e=cza1sw/${job.id}.xlsx`;
 
   await job.save();

@@ -4,6 +4,8 @@ const path = require("path");
 const router = express.Router();
 const { Candidate } = require("../models");
 const { uploadToOneDrive } = require("../services/storage");
+const axios = require("axios");
+const { Job } = require("../models");
 
 
 // ✅ Use in-memory storage so we can access req.file.buffer

@@ -67,38 +67,35 @@ router.post("/jd-complete", async (req, res) => {
   }
 });
 
-// ✅ Score Candidates in n8n:
-router.post("/score-candidates", async (req, res) => {
-  const pendingCandidates = await Candidate.findAll({
-    where: { status: "pending" },
-  });
+// ✅ Receive scored candidate data from n8n
+router.post("/resume-score-complete", async (req, res) => {
+  try {
+    const { email, ats_score, summary, reason, status } = req.body;
 
-  for (const candidate of pendingCandidates) {
-    const job = await Job.findByPk(candidate.jobId);
-    if (!job) continue;
+    if (!email || !status) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
 
-    const response = await axios.post(
-      "https://workflows.gb1.in/webhook/ats-score",
-      {
-        resume_url: candidate.resume_url,
-        jd: job.jd,
-        name: candidate.name,
-        email: candidate.email,
-        willing_to_relocate: candidate.custom_answers?.["Willing to relocate to Pune"]?.trim() || "Not specified"
-      }
-    );
+    const candidate = await Candidate.findOne({ where: { email } });
 
-    const { ats_score, summary, reason, status } = response.data;
+    if (!candidate) {
+      return res.status(404).json({ error: "Candidate not found" });
+    }
 
     await candidate.update({
       ats_score,
       summary,
       shortlisting_reason: reason,
-      status, // 'shortlisted' or 'rejected'
+      status,
     });
-  }
 
-  res.json({ success: true });
+    console.log(`✅ Resume scored: ${email} (${status})`);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Resume score update failed:", err.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 module.exports = router;
