@@ -59,6 +59,6 @@ async function scorePendingCandidates() {
 
 // Schedule: every 10 seconds (for testing)
 // Change to  "0 */2 * * *" for every 2 hours in production
-cron.schedule("*/10 * * * * *", async () => {
+cron.schedule("0 */2 * * *", async () => {
   await scorePendingCandidates();
 });
