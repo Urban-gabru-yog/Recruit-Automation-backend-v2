@@ -42,7 +42,7 @@ async function scorePendingCandidates() {
           jd: job.jd,
           name: candidate.name,
           email: candidate.email,
-          willing_to_relocate: candidate.willing_to_relocate || "Not specified",
+          willing_to_relocate: candidate.custom_answers?.["Willing to relocate to Pune"] || "Error",
         });
 
         console.log(`✅ Candidate ${candidate.email} sent to n8n`);
@@ -58,7 +58,7 @@ async function scorePendingCandidates() {
 }
 
 // Schedule: every 10 seconds (for testing)
-// Change to "*/10 * * * *" for every 10 minutes in production
-cron.schedule("0 */2 * * *", async () => {
+// Change to  "0 */2 * * *" for every 2 hours in production
+cron.schedule("*/10 * * * * *", async () => {
   await scorePendingCandidates();
 });
