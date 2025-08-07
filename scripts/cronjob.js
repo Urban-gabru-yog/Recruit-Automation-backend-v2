@@ -43,6 +43,7 @@ async function scorePendingCandidates() {
           name: candidate.name,
           email: candidate.email,
           willing_to_relocate: candidate.custom_answers?.["Willing to relocate to Pune"] || "Error",
+          custom_answers: candidate.custom_answers,
         });
 
         console.log(`✅ Candidate ${candidate.email} sent to n8n`);
