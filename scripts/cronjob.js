@@ -63,3 +63,4 @@ async function scorePendingCandidates() {
 cron.schedule("0 */2 * * *", async () => {
   await scorePendingCandidates();
 });
+
