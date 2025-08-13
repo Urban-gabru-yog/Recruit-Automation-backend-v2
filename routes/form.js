@@ -93,6 +93,24 @@ router.post("/submit", handleUpload, async (req, res) => {
   }
 });
 
+router.post("/update-status/:id", async (req, res) => {
+  try {
+    const { status, hr_status } = req.body;
+    const candidate = await Candidate.findByPk(req.params.id);
+    if (!candidate)
+      return res.status(404).json({ error: "Candidate not found" });
+
+    if (status) candidate.status = status;
+    if (hr_status) candidate.hr_status = hr_status;
+
+    await candidate.save();
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Status update error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;
 
 
