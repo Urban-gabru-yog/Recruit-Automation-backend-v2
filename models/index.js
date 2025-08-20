@@ -17,6 +17,10 @@ const User = require("./User")(sequelize);
 const Job = require("./Job")(sequelize);
 const Candidate = require("./Candidate")(sequelize);
 
+// Define associations
+Job.hasMany(Candidate, { foreignKey: 'jobId', as: 'candidates' });
+Candidate.belongsTo(Job, { foreignKey: 'jobId', as: 'job' });
+
 module.exports = {
   sequelize,
   User,

@@ -10,6 +10,7 @@ module.exports = (sequelize) => {
     sheet_link: DataTypes.STRING,
     form_link: DataTypes.STRING,
     team_lead_email: DataTypes.STRING, // ✅ New column
+    hidden: { type: DataTypes.BOOLEAN, defaultValue: false }, // ✅ Hide jobs feature
 
   });
 };

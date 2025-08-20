@@ -15,6 +15,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/form', require('./routes/form'));
 app.use('/api/n8n', require('./routes/n8n'));
+app.use('/api/candidates', require('./routes/candidates')); // ✅ New candidates routes
 
 
 // Sync DB

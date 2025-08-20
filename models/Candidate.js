@@ -11,7 +11,8 @@ module.exports = (sequelize) => {
     resume_url: DataTypes.STRING,
     summary: DataTypes.TEXT,
     status: DataTypes.STRING, // shortlisted / rejected
-    hr_status: DataTypes.STRING, // 'shortlisted', 'rejected', or null
-    shortlisting_reason: DataTypes.TEXT
+    hr_status: DataTypes.STRING, // 'shortlisted', 'rejected', 'hold', or null
+    shortlisting_reason: DataTypes.TEXT,
+    interview_status: DataTypes.STRING // 'scheduled', 'taken', or null
   });
 };

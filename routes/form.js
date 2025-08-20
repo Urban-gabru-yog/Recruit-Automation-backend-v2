@@ -111,6 +111,47 @@ router.post("/update-status/:id", async (req, res) => {
   }
 });
 
+// POST /api/form/update-interview-status/:id - Update interview status for candidates
+router.post('/update-interview-status/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { interview_status } = req.body;
+    
+    // Validate interview status
+    if (!['scheduled', 'taken'].includes(interview_status)) {
+      return res.status(400).json({ 
+        error: 'Invalid interview status. Must be "scheduled" or "taken"' 
+      });
+    }
+    
+    // Find and update candidate
+    const candidate = await Candidate.findByPk(id);
+    if (!candidate) {
+      return res.status(404).json({ error: 'Candidate not found' });
+    }
+    
+    // Update interview status
+    candidate.interview_status = interview_status;
+    await candidate.save();
+    
+    console.log(`✅ Interview status updated for ${candidate.name}: ${interview_status}`);
+    
+    res.json({ 
+      success: true, 
+      message: `Interview status updated to ${interview_status}`,
+      candidate: {
+        id: candidate.id,
+        name: candidate.name,
+        interview_status: interview_status
+      }
+    });
+    
+  } catch (error) {
+    console.error('Update interview status error:', error);
+    res.status(500).json({ error: 'Failed to update interview status' });
+  }
+});
+
 module.exports = router;
 
 

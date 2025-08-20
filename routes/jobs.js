@@ -4,6 +4,15 @@ const { Job, Candidate } = require("../models");
 const frontendUrl = process.env.FRONTEND_URL;
 
 router.get("/", async (req, res) => {
+  // Filter out hidden jobs by default
+  const jobs = await Job.findAll({
+    where: { hidden: false }
+  });
+  res.json(jobs);
+});
+
+// Keep this endpoint for admin purposes if needed  
+router.get("/all", async (req, res) => {
   const jobs = await Job.findAll();
   res.json(jobs);
 });
@@ -35,6 +44,38 @@ router.post("/close/:id", async (req, res) => {
   job.status = "closed";
   await job.save();
   res.json({ success: true });
+});
+
+router.post("/hide/:id", async (req, res) => {
+  try {
+    const job = await Job.findByPk(req.params.id);
+    if (!job) {
+      return res.status(404).json({ error: "Job not found" });
+    }
+    
+    job.hidden = true;
+    await job.save();
+    res.json({ success: true, message: "Job hidden successfully" });
+  } catch (err) {
+    console.error("Hide job error:", err);
+    res.status(500).json({ error: "Failed to hide job" });
+  }
+});
+
+router.post("/unhide/:id", async (req, res) => {
+  try {
+    const job = await Job.findByPk(req.params.id);
+    if (!job) {
+      return res.status(404).json({ error: "Job not found" });
+    }
+    
+    job.hidden = false;
+    await job.save();
+    res.json({ success: true, message: "Job unhidden successfully" });
+  } catch (err) {
+    console.error("Unhide job error:", err);
+    res.status(500).json({ error: "Failed to unhide job" });
+  }
 });
 
 module.exports = router;
