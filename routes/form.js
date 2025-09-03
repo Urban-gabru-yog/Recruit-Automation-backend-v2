@@ -111,6 +111,35 @@ router.post("/update-status/:id", async (req, res) => {
   }
 });
 
+// GET global latest ATS scoring timestamp
+router.get("/latest-ats-timestamp", async (req, res) => {
+  try {
+    const { Op } = require("sequelize");
+    
+    // Find the latest updatedAt from candidates with numeric ats_score
+    const latestCandidate = await Candidate.findOne({
+      where: {
+        ats_score: {
+          [Op.not]: null,
+          [Op.ne]: "",
+        },
+      },
+      order: [["updatedAt", "DESC"]],
+      limit: 1,
+      attributes: ["updatedAt"],
+    });
+    
+    if (!latestCandidate) {
+      return res.json({ timestamp: null });
+    }
+    
+    res.json({ timestamp: latestCandidate.updatedAt });
+  } catch (err) {
+    console.error("Latest ATS timestamp error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;
 
 
