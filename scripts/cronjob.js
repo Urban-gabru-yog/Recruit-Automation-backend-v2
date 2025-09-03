@@ -38,6 +38,7 @@ async function scorePendingCandidates() {
         }
 
         await axios.post(N8N_WEBHOOK_URL, {
+          candidate_id: candidate.id, // ✅ Include candidate ID for precise updates
           resume_url: candidate.resume_url,
           jd: job.jd,
           name: candidate.name,
@@ -46,9 +47,9 @@ async function scorePendingCandidates() {
           custom_answers: candidate.custom_answers,
         });
 
-        console.log(`✅ Candidate ${candidate.email} sent to n8n`);
+        console.log(`✅ Candidate ID ${candidate.id} (${candidate.email}) sent to n8n`);
       } catch (err) {
-        console.error(`❌ Error scoring ${candidate.email}:`, err.message);
+        console.error(`❌ Error scoring candidate ID ${candidate.id} (${candidate.email}):`, err.message);
       }
     }
 
@@ -58,7 +59,7 @@ async function scorePendingCandidates() {
   }
 }
 
-// Schedule: every 10 seconds (for testing)
+// Schedule: every 1 mins: "*/1 * * * *" (for testing only)
 // Change to  "0 */2 * * *" for every 2 hours in production
 cron.schedule("0 */2 * * *", async () => {
   await scorePendingCandidates();

@@ -70,16 +70,32 @@ router.post("/jd-complete", async (req, res) => {
 // ✅ Receive scored candidate data from n8n
 router.post("/resume-score-complete", async (req, res) => {
   try {
-    const { email, ats_score, summary, reason, status } = req.body;
+    const { candidate_id, email, ats_score, summary, reason, status } = req.body;
 
-    if (!email || !status) {
-      return res.status(400).json({ error: "Missing required fields" });
+    // ✅ Prioritize candidate_id over email for precise updates
+    if (!candidate_id && !email) {
+      return res.status(400).json({ error: "candidate_id or email is required" });
     }
 
-    const candidate = await Candidate.findOne({ where: { email } });
+    if (!status) {
+      return res.status(400).json({ error: "status is required" });
+    }
 
-    if (!candidate) {
-      return res.status(404).json({ error: "Candidate not found" });
+    let candidate;
+    
+    if (candidate_id) {
+      // ✅ Use candidate ID for precise lookup (recommended)
+      candidate = await Candidate.findByPk(candidate_id);
+      if (!candidate) {
+        return res.status(404).json({ error: `Candidate with ID ${candidate_id} not found` });
+      }
+    } else {
+      // ✅ Fallback to email (legacy support, but will only update first match)
+      candidate = await Candidate.findOne({ where: { email } });
+      if (!candidate) {
+        return res.status(404).json({ error: `Candidate with email ${email} not found` });
+      }
+      console.warn(`⚠️ Using email fallback for candidate lookup. Consider using candidate_id for precision.`);
     }
 
     await candidate.update({
@@ -89,9 +105,14 @@ router.post("/resume-score-complete", async (req, res) => {
       status,
     });
 
-    console.log(`✅ Resume scored: ${email} (${status})`);
+    console.log(`✅ Resume scored: ID ${candidate.id} - ${candidate.email} (${status})`);
 
-    res.json({ success: true });
+    res.json({ 
+      success: true, 
+      candidateId: candidate.id,
+      email: candidate.email,
+      status: status
+    });
   } catch (err) {
     console.error("❌ Resume score update failed:", err.message);
     res.status(500).json({ error: "Internal server error" });

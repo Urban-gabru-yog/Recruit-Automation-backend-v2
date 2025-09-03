@@ -20,7 +20,7 @@ app.use('/api/candidates', require('./routes/candidates')); // ✅ New candidate
 
 // Sync DB
 sequelize.sync().then(() => {
-  app.listen(3001, () => console.log('Backend running on port 3001'));
+  app.listen(3000, () => console.log('Backend running on port 3000'));
 });
 
 app.get('/', (req, res) => {

@@ -5,6 +5,9 @@ const path = require("path");
 const router = express.Router();
 const { Candidate } = require("../models");
 const { uploadToOneDrive } = require("../services/storage");
+const { validateEmail } = require("../utils/emailValidator"); // ✅ Import email validator
+const { normalizePhoneNumber, validatePhoneNumber } = require("../utils/phoneValidator"); // ✅ Import phone validator
+const { Op } = require("sequelize"); // ✅ Import Sequelize operators
 
 // In-memory storage + 2 MB limit + allowed types
 const storage = multer.memoryStorage();
@@ -50,10 +53,154 @@ const handleUpload = (req, res, next) => {
   });
 };
 
+// ✅ Check if candidate already applied for this job
+router.post("/check-duplicate", async (req, res) => {
+  try {
+    const { email, phone, job_id } = req.body;
+    
+    if (!email || !job_id) {
+      return res.status(400).json({ error: "Email and job_id are required" });
+    }
+
+    // ✅ Validate email format and domain
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      return res.status(400).json({ 
+        error: emailValidation.error,
+        suggestion: emailValidation.suggestion,
+        isEmailInvalid: true
+      });
+    }
+
+    // ✅ Normalize phone number for duplicate checking
+    let normalizedPhone = '';
+    if (phone) {
+      normalizedPhone = normalizePhoneNumber(phone);
+    }
+
+    // ✅ Check for duplicates by email OR phone number for this job
+    const whereConditions = {
+      jobId: job_id,
+      [Op.or]: [
+        { email: email.toLowerCase().trim() }
+      ]
+    };
+
+    // Only add phone condition if we have a valid normalized phone
+    if (normalizedPhone && normalizedPhone.length >= 7) {
+      // Check for candidates with the same normalized phone number
+      const candidatesWithPhone = await Candidate.findAll({
+        where: { jobId: job_id }
+      });
+      
+      // Find if any candidate has the same normalized phone
+      const phoneMatch = candidatesWithPhone.find(candidate => {
+        if (candidate.phone) {
+          const candidateNormalizedPhone = normalizePhoneNumber(candidate.phone);
+          return candidateNormalizedPhone === normalizedPhone;
+        }
+        return false;
+      });
+
+      if (phoneMatch) {
+        return res.json({ 
+          isDuplicate: true, 
+          appliedDate: phoneMatch.createdAt,
+          candidateName: phoneMatch.name,
+          duplicateType: 'phone',
+          message: 'A candidate with this phone number has already applied for this position'
+        });
+      }
+    }
+
+    const existingApplication = await Candidate.findOne({
+      where: whereConditions
+    });
+
+    if (existingApplication) {
+      return res.json({ 
+        isDuplicate: true, 
+        appliedDate: existingApplication.createdAt,
+        candidateName: existingApplication.name,
+        duplicateType: 'email'
+      });
+    }
+
+    res.json({ isDuplicate: false });
+  } catch (err) {
+    console.error("Duplicate check error:", err);
+    res.status(500).json({ error: "Failed to check duplicate application" });
+  }
+});
+
 router.post("/submit", handleUpload, async (req, res) => {
   try {
     const { name, email, phone, job_id, team, position, ...rest } = req.body;
     if (!req.file) return res.status(400).json({ error: "No resume file uploaded" });
+
+    // ✅ Validate email format and domain before processing
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      return res.status(400).json({ 
+        error: emailValidation.error,
+        suggestion: emailValidation.suggestion,
+        isEmailInvalid: true
+      });
+    }
+
+    // ✅ Validate phone number
+    let normalizedPhone = '';
+    if (phone) {
+      const phoneValidation = validatePhoneNumber(phone);
+      if (!phoneValidation.isValid) {
+        return res.status(400).json({ 
+          error: phoneValidation.error,
+          isPhoneInvalid: true
+        });
+      }
+      normalizedPhone = phoneValidation.normalized;
+    }
+
+    // ✅ Check for duplicate application by email OR phone number
+    const existingByEmail = await Candidate.findOne({
+      where: { 
+        email: email.toLowerCase().trim(),
+        jobId: job_id 
+      }
+    });
+
+    if (existingByEmail) {
+      return res.status(409).json({ 
+        error: "You have already applied for this position with this email address", 
+        appliedDate: existingByEmail.createdAt,
+        isDuplicate: true,
+        duplicateType: 'email'
+      });
+    }
+
+    // ✅ Check for duplicate by phone number if provided
+    if (normalizedPhone && normalizedPhone.length >= 7) {
+      const candidatesWithPhone = await Candidate.findAll({
+        where: { jobId: job_id }
+      });
+      
+      const phoneMatch = candidatesWithPhone.find(candidate => {
+        if (candidate.phone) {
+          const candidateNormalizedPhone = normalizePhoneNumber(candidate.phone);
+          return candidateNormalizedPhone === normalizedPhone;
+        }
+        return false;
+      });
+
+      if (phoneMatch) {
+        return res.status(409).json({ 
+          error: "A candidate with this phone number has already applied for this position", 
+          appliedDate: phoneMatch.createdAt,
+          isDuplicate: true,
+          duplicateType: 'phone'
+        });
+      }
+    }
 
     // Rename -> name-position-YYYYMMDD-HHmmss.ext
     const base = `${slug(name)}-${slug(position)}`.replace(/^-+|-+$/g, "") || "resume";
@@ -78,7 +225,7 @@ router.post("/submit", handleUpload, async (req, res) => {
 
     await Candidate.create({
       name,
-      email,
+      email: email.toLowerCase().trim(), // ✅ Normalize email
       phone,
       jobId: job_id,
       resume_url: resumeUrl,
